@@ -4,6 +4,6 @@
 - Absolute minimalism
 - No libc
 - Written in C
-- Just a CLI wrapper around `ChangeDisplaySettingsW` (Win32 API)
+- Just a CLI wrapper over `ChangeDisplaySettingsW` (Win32 API)
 - Usage: `chres 1920x1080`
 - Minimal build learned from skeeto

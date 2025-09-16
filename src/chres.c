@@ -55,7 +55,7 @@ void __stdcall mainCRTStartup()
   int w = parseu32(&arg1);
   int h = parseu32(&arg1);
 
-  struct {
+  struct { // DEVMODEW
        char _0x00[68];
      ushort dmSize;
        char _0x46[1];
