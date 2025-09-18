@@ -4,7 +4,7 @@
 #define lenof(a) (int)(sizeof(a) / sizeof(*(a)))
 #define s(s) (char *)s, lenof(s)-1
 
-typedef unsigned short ushort;
+typedef unsigned short ushort; /* shorter short */
 
 enum {
   CDS_UPDATEREGISTRY = 0x00000001,
@@ -12,7 +12,7 @@ enum {
   DM_PELSHEIGHT = 0x00100000
 };
 
-#define W32 __attribute((dllimport)) __stdcall
+#define W32 __attribute__((dllimport, stdcall))
 W32 wchar_t *GetCommandLineW();
 W32 wchar_t **CommandLineToArgvW(wchar_t *, int *);
 W32 size_t GetStdHandle(int);
@@ -20,12 +20,12 @@ W32 int WriteFile(size_t, char *, int, int *, size_t);
 W32 void ExitProcess(int) __attribute((noreturn));
 W32 int ChangeDisplaySettingsW(void *, int);
 
-static void print(int fd, char *data, int len)
+static void Print(int fd, char *data, int len)
 {
   WriteFile(GetStdHandle(-10 - fd), data, len, &(int){0}, 0);
 }
 
-static int parseu32(wchar_t **str)
+static int ParseUnsigned(wchar_t **str)
 {
   wchar_t *c = *str;
   while ((*c < L'0' || L'9' < *c) && *c != L'\0') {
@@ -42,20 +42,19 @@ static int parseu32(wchar_t **str)
 
 void __stdcall mainCRTStartup()
 {
-  wchar_t *cmd = GetCommandLineW();
   int argc = 0;
-  wchar_t **argv = CommandLineToArgvW(cmd, &argc);
+  wchar_t **argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
   if (argc != 2) {
-    print(2, s("Example usage: chdir 1920x1080@144\n"));
+    Print(2, s("Example usage: chdir 1920x1080@144\n"));
     ExitProcess(1);
   }
 
-  wchar_t *arg1 = argv[1];
-  int w = parseu32(&arg1);
-  int h = parseu32(&arg1);
+  wchar_t *c = argv[1];
+  int w = ParseUnsigned(&c);
+  int h = ParseUnsigned(&c);
 
-  struct { // DEVMODEW
+  struct { /* DEVMODEW */
        char _0x00[68];
      ushort dmSize;
        char _0x46[1];
@@ -68,12 +67,11 @@ void __stdcall mainCRTStartup()
   desiredMode.dmPelsWidth = w;
   desiredMode.dmPelsHeight = h;
   desiredMode.dmFields = DM_PELSHEIGHT | DM_PELSWIDTH;
-  int error = ChangeDisplaySettingsW(&desiredMode, CDS_UPDATEREGISTRY);
 
-  if (!error) {
-    ExitProcess(0);
-  } else {
-    print(2, s("Failed to change resolution"));
-    ExitProcess(error);
+  int error = ChangeDisplaySettingsW(&desiredMode, CDS_UPDATEREGISTRY);
+  if (error) {
+    Print(2, s("Failed to change resolution"));
   }
+
+  ExitProcess(error); /* 'error' will be 0 if no error */
 }
